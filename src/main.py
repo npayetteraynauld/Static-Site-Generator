@@ -77,11 +77,11 @@ def main():
     basepath = '/'
     if len(sys.argv) >= 2:
         basepath = sys.argv[1]
-    if os.path.exists('docs' + basepath):
-        shutil.rmtree('docs' + basepath)
-    os.makedirs('docs' + basepath, exist_ok=True)
-    copy_static('static', target_dir='docs' + basepath)
-    generate_pages_recursive('content', 'template.html', 'docs' + basepath, basepath)
+    if os.path.exists('docs'):
+        shutil.rmtree('docs')
+    os.makedirs('docs', exist_ok=True)
+    copy_static('static')
+    generate_pages_recursive('content', 'template.html', 'docs', basepath)
     return
 
 main()
