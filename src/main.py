@@ -1,10 +1,11 @@
+import sys
 import os
 import shutil
 import re
 
 from block_to_html import markdown_to_html_node
 
-def copy_static(static_dir, target_dir='public'):
+def copy_static(static_dir, target_dir='docs'):
     """Copy all files from static_dir to target_dir."""
     if not os.path.exists(static_dir):
         return
@@ -30,7 +31,7 @@ def extract_title(markdown):
         raise Exception("No title to extract")
     return extracted.group(1).strip()
 
-def generate_page(from_path, template_path, dest_path):
+def generate_page(from_path, template_path, dest_path, basepath):
     print(f"Generating page from {from_path} to {dest_path} using {template_path}")
     with open(from_path, "r") as file:
         markdown = file.read()
@@ -43,6 +44,7 @@ def generate_page(from_path, template_path, dest_path):
     title = extract_title(markdown)
 
     full_html = template.replace("{{ Title }}", title).replace("{{ Content }}", html_content)
+    full_html = full_html.replace('href="/', f'href="{basepath}').replace('src="/', f'src="{basepath}')
     
     directory = os.path.dirname(dest_path)
     if directory and not os.path.exists(directory):
@@ -53,7 +55,7 @@ def generate_page(from_path, template_path, dest_path):
 
     return
 
-def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
+def generate_pages_recursive(dir_path_content, template_path, dest_dir_path, basepath='/'):
     list_folders = os.listdir(dir_path_content)
     for folder in list_folders:
         complete_path = os.path.join(dir_path_content, folder)
@@ -61,22 +63,25 @@ def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
         root, ext = os.path.splitext(public_path)
         if folder and os.path.isfile(complete_path) and ext == '.md':
             html_path = root + '.html'
-            generate_page(complete_path, template_path, html_path)
+            generate_page(complete_path, template_path, html_path, basepath)
         elif folder and os.path.isdir(complete_path):
             if not os.path.exists(public_path):
                 os.makedirs(public_path)
-            generate_pages_recursive(complete_path, template_path, public_path)
+            generate_pages_recursive(complete_path, template_path, public_path, basepath)
     return
 
 
 
 
 def main():
-    if os.path.exists('public'):
-        shutil.rmtree('public')
-    os.mkdir('public')
+    basepath = '/'
+    if len(sys.argv) >= 2:
+        basepath = sys.argv[1]
+    if os.path.exists('docs'):
+        shutil.rmtree('docs')
+    os.mkdir('docs')
     copy_static('static')
-    generate_pages_recursive('content', 'template.html', 'public')
+    generate_pages_recursive('content', 'template.html', 'docs', basepath)
     return
 
 main()
